@@ -1494,10 +1494,16 @@ document.getElementById('btn-voltar-home-2').onclick = () => mostrarEcra('ecra-h
 // ARRANQUE
 // ==========================================
 async function iniciar() {
-  estado.plantel = await dbCarregarPlantel();
-  await renderizarListaJogos();
+  try {
+    console.log('🔄 A ligar ao Supabase...');
+    estado.plantel = await dbCarregarPlantel();
+    await renderizarListaJogos();
+    console.log('✅ Ligação OK · plantel:', estado.plantel.length, 'jogadores');
+  } catch (err) {
+    console.error('❌ Erro ao ligar:', err);
+    alert('Erro a ligar à base de dados. Verifica a tua internet.');
+  }
 }
-
 // ==========================================
 // RELATÓRIO DO JOGADOR / EXPORTAÇÃO
 // ==========================================

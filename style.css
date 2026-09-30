@@ -1194,3 +1194,302 @@ button:active { transform: scale(0.97); }
   position: relative;
 }
 .grafico-wrapper canvas { max-height: 100%; }
+/* ==========================================
+   RESPONSIVO — TELEMÓVEL
+   Aplica-se apenas em ecrãs < 700px
+   Tablet e PC mantêm o aspeto atual
+   ========================================== */
+
+@media (max-width: 700px) {
+
+  /* ---------- GERAL ---------- */
+  .ecra {
+    padding: 10px;
+    gap: 8px;
+  }
+  header h1 { font-size: 20px; }
+  header .sub { font-size: 12px; }
+
+  /* ---------- HEADER HOME ---------- */
+  .header-home {
+    gap: 10px;
+    padding-bottom: 10px;
+  }
+  .logo-clube {
+    width: 44px;
+    height: 44px;
+    padding: 2px;
+  }
+  .header-home h1 { font-size: 18px; }
+  .header-home .sub { font-size: 11px; }
+
+  /* ---------- BOTÕES ---------- */
+  button {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+  .btn-grande {
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  /* Empilhar botões de navegação em ecrãs pequenos */
+  .acoes-fundo {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .acoes-fundo button {
+    flex: 1 1 calc(50% - 3px);
+    min-width: 0;
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+
+  /* ---------- LISTAS DE JOGADORES ---------- */
+  .lista-jogadores li {
+    padding: 10px;
+    gap: 8px;
+    font-size: 14px;
+  }
+  .lista-jogadores li .num {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+  }
+  .pos-tag {
+    font-size: 9px;
+    padding: 2px 5px;
+  }
+
+  /* ---------- HOME — LISTA DE JOGOS ---------- */
+  .lista-jogos li {
+    padding: 12px;
+  }
+  .lista-jogos li .jogo-topo {
+    font-size: 14px;
+    padding-right: 28px;
+  }
+  .lista-jogos li .jogo-res { font-size: 18px; }
+  .lista-jogos li .jogo-sub { font-size: 12px; }
+
+  /* ---------- ECRÃ JOGO ---------- */
+  .header-jogo {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .cronometro { font-size: 22px; }
+  .parte { font-size: 12px; }
+  .info-jogo .resultado { font-size: 20px; }
+  .adversario-txt { font-size: 11px; }
+  .btn-sair { padding: 6px 10px; font-size: 12px; }
+  .btn-ctrl { padding: 8px; font-size: 12px; }
+
+  /* Grelha do jogo: 4 → 3 colunas */
+  .grid-jogadores {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .grid-jogadores button {
+    height: 75px;
+    padding: 4px;
+  }
+  .grid-jogadores button .g-num { font-size: 18px; }
+  .grid-jogadores button .g-nome { font-size: 10px; }
+
+  /* ---------- PAINEL DE AÇÕES ---------- */
+  .painel-acoes {
+    padding: 12px;
+    gap: 8px;
+    border-radius: 16px 16px 0 0;
+    max-height: 90vh;
+  }
+  .painel-acoes-titulo {
+    font-size: 16px;
+  }
+
+  /* Botões de ação: 3 → 2 colunas em telemóvel */
+  .botoes-acoes {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .botoes-acoes .acao {
+    padding: 12px 6px;
+    font-size: 12px;
+  }
+  .botoes-acoes .acao[data-tipo="substituicao"] {
+    grid-column: 1 / -1;
+  }
+
+  /* ---------- SUBSTITUIÇÃO ---------- */
+  .sub-banco-lista {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .sub-banco-lista button {
+    padding: 8px 4px;
+  }
+  .sub-banco-lista button .b-num { font-size: 14px; }
+  .sub-banco-lista button .b-nome { font-size: 9px; }
+
+  /* ---------- ESTATÍSTICAS ---------- */
+  .painel-stats {
+    padding: 10px;
+  }
+  .painel-stats-header h2 { font-size: 18px; }
+  .resumo-equipa {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .resumo-item {
+    padding: 8px;
+  }
+  .resumo-item .valor { font-size: 18px; }
+  .resumo-item .label { font-size: 9px; }
+
+  .cartao-jogador {
+    padding: 10px 12px;
+  }
+  .cartao-jogador-stats {
+    gap: 8px;
+    font-size: 12px;
+  }
+  .cartao-jogador-stats span strong { font-size: 13px; }
+
+  /* ---------- RANKING ---------- */
+  .ranking-filtros {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .rank-item {
+    padding: 8px 10px;
+    gap: 8px;
+    font-size: 14px;
+  }
+  .rank-item .num {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+  .rank-item .valor { font-size: 18px; min-width: 40px; }
+  .rank-pos { font-size: 16px; min-width: 24px; }
+  .rank-sub { font-size: 10px; }
+
+  /* ---------- JOGADOR DETALHE ---------- */
+  .jog-num {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+  .jogo-jogador-item {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .jogo-jogador-item .topo strong { font-size: 14px; }
+  .jogo-jogador-item .resultado-mini { font-size: 14px; }
+  .jogo-jogador-item .stats-linha {
+    gap: 8px;
+    font-size: 11px;
+  }
+
+  /* ---------- GRÁFICO ---------- */
+  .grafico-wrapper {
+    height: 200px;
+    padding: 10px;
+  }
+
+  /* ---------- RELATÓRIO ---------- */
+  .painel-relatorio {
+    padding: 10px;
+  }
+  .painel-relatorio-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .painel-relatorio-acoes {
+    width: 100%;
+  }
+  .painel-relatorio-acoes button {
+    flex: 1;
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+  .relatorio-conteudo {
+    padding: 16px;
+  }
+  .rel-header h1 { font-size: 18px; }
+  .rel-resultado { font-size: 32px; letter-spacing: 2px; }
+  .rel-sub { font-size: 11px; }
+
+  /* Tabela do relatório: permitir scroll horizontal */
+  .rel-tabela {
+    font-size: 10px;
+  }
+  .rel-tabela thead th,
+  .rel-tabela td {
+    padding: 6px 4px;
+  }
+
+  /* ---------- DADOS / BACKUP ---------- */
+  .dados-cartao {
+    padding: 12px;
+  }
+  .dados-info {
+    font-size: 13px;
+  }
+  .dados-info .linha strong { font-size: 14px; }
+
+  /* ---------- CONVOCATÓRIA ---------- */
+  .conv-resumo {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+}
+
+/* ==========================================
+   TELEMÓVEL PEQUENO (< 420px)
+   ========================================== */
+@media (max-width: 420px) {
+
+  /* Grelha do jogo: 3 → 2 colunas */
+  .grid-jogadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .grid-jogadores button {
+    height: 70px;
+  }
+
+  /* Ações: 2 colunas continua */
+  .botoes-acoes .acao {
+    font-size: 11px;
+    padding: 10px 4px;
+  }
+
+  /* Resumo equipa: 3 → 2 colunas */
+  .resumo-equipa {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Botões do rodapé ainda mais compactos */
+  .acoes-fundo button {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  /* Header do jogo */
+  .cronometro { font-size: 20px; }
+  .info-jogo .resultado { font-size: 18px; }
+}
+
+/* ==========================================
+   TABLET PEQUENO (600-900px)
+   Ajuste suave
+   ========================================== */
+@media (min-width: 701px) and (max-width: 900px) {
+  .grid-jogadores {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .grid-jogadores button {
+    height: 80px;
+  }
+}
