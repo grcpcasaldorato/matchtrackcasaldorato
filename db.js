@@ -94,37 +94,40 @@ async function dbCarregarJogos() {
 }
 
 async function dbGuardarJogo(jogo) {
+  const payload = {
+    id: jogo.id,
+    data: jogo.data,
+    adversario: jogo.adversario,
+    competicao: jogo.competicao || null,
+    convocados: jogo.convocados || [],
+    titulares: jogo.titulares || [],
+    emCampo: jogo.emCampo || [],
+    eventos: jogo.eventos || [],
+    substituicoes: jogo.substituicoes || [],
+    golosCasa: jogo.golosCasa || 0,
+    golosFora: jogo.golosFora || 0,
+    minuto: jogo.minuto || 0,
+    segundo: jogo.segundo || 0,
+    parte: jogo.parte || 1,
+    terminado: jogo.terminado || false,
+    pausado: jogo.pausado || false
+  };
+
+  console.log('📤 A gravar jogo:', payload);
+
   const { data, error } = await sb
     .from('jogos')
-    .upsert({
-      id: jogo.id,
-      data: jogo.data,
-      adversario: jogo.adversario,
-      competicao: jogo.competicao || null,
-      convocados: jogo.convocados || [],
-      titulares: jogo.titulares || [],
-      emCampo: jogo.emCampo || [],
-      eventos: jogo.eventos || [],
-      substituicoes: jogo.substituicoes || [],
-      golosCasa: jogo.golosCasa || 0,
-      golosFora: jogo.golosFora || 0,
-      minuto: jogo.minuto || 0,
-      segundo: jogo.segundo || 0,
-      parte: jogo.parte || 1,
-      terminado: jogo.terminado || false,
-      pausado: jogo.pausado || false,
-      atualizado_em: new Date().toISOString()
-    })
+    .upsert(payload)
     .select()
     .single();
 
   if (error) {
-    console.error('Erro a guardar jogo:', error);
+    console.error('❌ Erro Supabase:', error);
+    console.error('Detalhe:', error.message, error.details, error.hint);
     throw error;
   }
   return data;
 }
-
 async function dbRemoverJogo(id) {
   const { error } = await sb
     .from('jogos')
