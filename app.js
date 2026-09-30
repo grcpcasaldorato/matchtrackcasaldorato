@@ -72,9 +72,14 @@ function calcularMinutosPorJogo(jogo, jogadorId) {
 function mostrarEcra(id) {
   document.querySelectorAll('.ecra').forEach(e => e.classList.add('escondido'));
   document.getElementById(id).classList.remove('escondido');
-}
 
-// ==========================================
+  // Registo no histórico para o botão físico funcionar
+  if (id !== 'ecra-home') {
+    history.pushState({ ecra: id }, '', '');
+  }
+
+  atualizarBotaoVoltar();
+}// ==========================================
 // PLANTEL
 // ==========================================
 const listaPlantel = document.getElementById('lista-plantel');
@@ -1653,5 +1658,17 @@ async function renderizarRelatorioJogador(jogadorId) {
     <div class="rel-footer">Gerado por MatchTrack · GRCP Casal do Rato</div>
   `;
 }
-
+// ==========================================
+// Suporte ao botão físico de voltar (Android/PWA)
+// ==========================================
+window.addEventListener('popstate', (e) => {
+  const visivel = document.querySelector('.ecra:not(.escondido)');
+  if (!visivel) return;
+  const destino = VOLTAR_PARA[visivel.id];
+  if (destino) {
+    mostrarEcra(destino);
+    // Mantém o estado para permitir voltar outra vez
+    history.pushState({ ecra: destino }, '', '');
+  }
+});
 iniciar();

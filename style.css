@@ -1493,3 +1493,38 @@ button:active { transform: scale(0.97); }
     height: 80px;
   }
 }
+/* ============ BOTÃO VOLTAR GLOBAL ============ */
+.btn-voltar-topo {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 50;
+  background: var(--bg-card);
+  color: var(--texto);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--sombra);
+  display: none; /* escondido por defeito — só aparece em ecrãs secundários */
+}
+.btn-voltar-topo:active {
+  background: var(--vermelho);
+  color: #fff;
+}
+.btn-voltar-topo.visivel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Em mobile, afasta um pouco mais do topo */
+@media (max-width: 700px) {
+  .btn-voltar-topo {
+    top: 8px;
+    left: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
