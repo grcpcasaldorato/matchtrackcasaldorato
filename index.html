@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#dc2626">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MatchTrack">
   <title>MatchTrack · GRCP Casal do Rato</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -372,11 +379,22 @@
     <div id="relatorio-jogador-conteudo" class="relatorio-conteudo"></div>
   </div>
 
-  <!-- ============ SCRIPTS ============ -->
+    <!-- ============ SCRIPTS ============ -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="db.js"></script>
   <script src="app.js"></script>
+
+  <!-- PWA — Registo do service worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(() => console.log('✅ PWA ativo'))
+          .catch((err) => console.warn('⚠️ PWA falhou:', err));
+      });
+    }
+  </script>
 </body>
 </html>
