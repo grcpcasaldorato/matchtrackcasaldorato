@@ -13,6 +13,38 @@ let subEscolhida = { saiId: null, entraId: null };
 let jogadorEmEdicaoId = null;
 
 // ==========================================
+// NAVEGAÇÃO — mapa de voltar
+// ==========================================
+const VOLTAR_PARA = {
+  'ecra-plantel': 'ecra-home',
+  'ecra-jogadores': 'ecra-home',
+  'ecra-jogador-detalhe': 'ecra-jogadores',
+  'ecra-novo-jogo': 'ecra-home',
+  'ecra-jogo': 'ecra-home',
+  'ecra-ranking': 'ecra-home',
+  'ecra-dados': 'ecra-home'
+};
+
+function atualizarBotaoVoltar() {
+  const btn = document.getElementById('btn-voltar-global');
+  if (!btn) return;
+  const visivel = document.querySelector('.ecra:not(.escondido)');
+  if (!visivel) return;
+  if (visivel.id === 'ecra-home') {
+    btn.classList.remove('visivel');
+  } else {
+    btn.classList.add('visivel');
+  }
+}
+
+document.getElementById('btn-voltar-global').onclick = () => {
+  const visivel = document.querySelector('.ecra:not(.escondido)');
+  if (!visivel) return;
+  const destino = VOLTAR_PARA[visivel.id];
+  if (destino) mostrarEcra(destino);
+};
+
+// ==========================================
 // ORDENAÇÃO DE JOGADORES
 // ==========================================
 const ORDEM_POSICOES = { GR: 1, FIXO: 2, ALA: 3, PIVOT: 4, UNIVERSAL: 5 };
@@ -73,13 +105,14 @@ function mostrarEcra(id) {
   document.querySelectorAll('.ecra').forEach(e => e.classList.add('escondido'));
   document.getElementById(id).classList.remove('escondido');
 
-  // Registo no histórico para o botão físico funcionar
   if (id !== 'ecra-home') {
     history.pushState({ ecra: id }, '', '');
   }
 
   atualizarBotaoVoltar();
-}// ==========================================
+}
+
+// ==========================================
 // PLANTEL
 // ==========================================
 const listaPlantel = document.getElementById('lista-plantel');
@@ -1399,7 +1432,6 @@ async function renderizarDadosInfo() {
   `;
 }
 
-// --------- EXPORTAR ---------
 document.getElementById('btn-exportar-dados').onclick = async () => {
   const plantel = await dbCarregarPlantel();
   const jogos = await dbCarregarJogos();
@@ -1426,7 +1458,6 @@ document.getElementById('btn-exportar-dados').onclick = async () => {
   URL.revokeObjectURL(url);
 };
 
-// --------- IMPORTAR ---------
 const inputImportar = document.getElementById('input-importar');
 
 document.getElementById('btn-importar-dados').onclick = () => {
@@ -1471,7 +1502,6 @@ inputImportar.onchange = async (e) => {
   }
 };
 
-// --------- APAGAR TUDO ---------
 document.getElementById('btn-apagar-tudo').onclick = async () => {
   const j1 = confirm('⚠️ Apagar TODOS os dados?\n\nIsto remove o plantel inteiro e todos os jogos.\n\nDeseja continuar?');
   if (!j1) return;
@@ -1496,21 +1526,7 @@ document.getElementById('btn-voltar-home-1').onclick = () => mostrarEcra('ecra-h
 document.getElementById('btn-voltar-home-2').onclick = () => mostrarEcra('ecra-home');
 
 // ==========================================
-// ARRANQUE
-// ==========================================
-async function iniciar() {
-  try {
-    console.log('🔄 A ligar ao Supabase...');
-    estado.plantel = await dbCarregarPlantel();
-    await renderizarListaJogos();
-    console.log('✅ Ligação OK · plantel:', estado.plantel.length, 'jogadores');
-  } catch (err) {
-    console.error('❌ Erro ao ligar:', err);
-    alert('Erro a ligar à base de dados. Verifica a tua internet.');
-  }
-}
-// ==========================================
-// RELATÓRIO DO JOGADOR / EXPORTAÇÃO
+// RELATÓRIO DO JOGADOR
 // ==========================================
 const painelRelatorioJogador = document.getElementById('painel-relatorio-jogador');
 
@@ -1658,17 +1674,33 @@ async function renderizarRelatorioJogador(jogadorId) {
     <div class="rel-footer">Gerado por MatchTrack · GRCP Casal do Rato</div>
   `;
 }
+
 // ==========================================
 // Suporte ao botão físico de voltar (Android/PWA)
 // ==========================================
-window.addEventListener('popstate', (e) => {
+window.addEventListener('popstate', () => {
   const visivel = document.querySelector('.ecra:not(.escondido)');
   if (!visivel) return;
   const destino = VOLTAR_PARA[visivel.id];
   if (destino) {
     mostrarEcra(destino);
-    // Mantém o estado para permitir voltar outra vez
     history.pushState({ ecra: destino }, '', '');
   }
 });
+
+// ==========================================
+// ARRANQUE
+// ==========================================
+async function iniciar() {
+  try {
+    console.log('🔄 A ligar ao Supabase...');
+    estado.plantel = await dbCarregarPlantel();
+    await renderizarListaJogos();
+    console.log('✅ Ligação OK · plantel:', estado.plantel.length, 'jogadores');
+  } catch (err) {
+    console.error('❌ Erro ao ligar:', err);
+    alert('Erro a ligar à base de dados. Verifica a tua internet.');
+  }
+}
+
 iniciar();
