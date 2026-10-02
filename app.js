@@ -236,7 +236,25 @@ async function renderizarListaJogos() {
   jogos.forEach(j => {
     const li = document.createElement('li');
     const dataFmt = new Date(j.data).toLocaleDateString('pt-PT');
-    const estadoTxt = j.terminado ? 'Terminado' : 'Em curso';
+
+    // Define o texto e a classe do estado
+    let estadoTxt, estadoCls;
+    if (j.agendado) {
+      estadoTxt = '📅 Agendado';
+      estadoCls = 'agendado';
+    } else if (j.terminado) {
+      estadoTxt = 'Terminado';
+      estadoCls = 'terminado';
+    } else {
+      estadoTxt = 'Em curso';
+      estadoCls = '';
+    }
+
+    // Botão "Iniciar" só aparece se estiver agendado
+    const botaoIniciar = j.agendado
+      ? `<button class="btn-iniciar-jogo" data-jogo-id="${j.id}">▶️ Iniciar</button>`
+      : '';
+
     li.innerHTML = `
       <button class="btn-apagar-jogo" title="Apagar jogo">🗑️</button>
       <div class="jogo-topo">
@@ -245,10 +263,15 @@ async function renderizarListaJogos() {
       </div>
       <div class="jogo-sub">
         ${dataFmt}${j.competicao ? ' · ' + j.competicao : ''}
-        <span class="estado ${j.terminado ? 'terminado' : ''}" style="margin-left:8px">${estadoTxt}</span>
+        <span class="estado ${estadoCls}" style="margin-left:8px">${estadoTxt}</span>
+        ${botaoIniciar}
       </div>
     `;
+
+    // Clique no item → abre o jogo (retomar, se já começou; se agendado, abre igual)
     li.onclick = () => retomarJogo(j);
+
+    // Clique no 🗑️ → apaga
     li.querySelector('.btn-apagar-jogo').onclick = async (e) => {
       e.stopPropagation();
       const confirmar = confirm(
@@ -261,10 +284,19 @@ async function renderizarListaJogos() {
       await dbRemoverJogo(j.id);
       await renderizarListaJogos();
     };
+
+    // Clique no "▶️ Iniciar" → arranca o jogo
+    const btnIniciar = li.querySelector('.btn-iniciar-jogo');
+    if (btnIniciar) {
+      btnIniciar.onclick = (e) => {
+        e.stopPropagation();
+        iniciarJogoAgendado(j);
+      };
+    }
+
     lista.appendChild(li);
   });
 }
-
 // ==========================================
 // NOVO JOGO
 // ==========================================
@@ -321,7 +353,7 @@ function renderizarConvocatoria() {
   });
 }
 
-document.getElementById('btn-comecar-jogo').onclick = async () => {
+document.getElementById('btn-guardar-agendado').onclick = async () => {
   const data = document.getElementById('input-data').value;
   const adversario = document.getElementById('input-adversario').value.trim();
   const competicao = document.getElementById('input-competicao').value.trim();
@@ -337,13 +369,22 @@ document.getElementById('btn-comecar-jogo').onclick = async () => {
     data, adversario, competicao,
     convocados: todosConvocados,
     titulares: jogoTemporario.titulares.slice(),
-    emCampo: jogoTemporario.titulares.slice(),
+    emCampo: [],                          // vazio — só enche quando iniciar
     eventos: [], golosCasa: 0, golosFora: 0,
     minuto: 0, segundo: 0, parte: 1,
-    terminado: false, pausado: false,
+    terminado: false,
+    pausado: true,                        // pausado até arrancar
+    agendado: true,                       // ⬅️ NOVO — está agendado, ainda não começou
     substituicoes: [], criadoEm: Date.now()
   };
 
+  await dbGuardarJogo(novoJogo);
+  jogoTemporario = null;
+
+  alert('✅ Jogo agendado! Vai ao home para o iniciar quando for a hora.');
+  await renderizarListaJogos();
+  mostrarEcra('ecra-home');
+};
   await dbGuardarJogo(novoJogo);
   jogoTemporario = null;
   iniciarJogo(novoJogo);
@@ -1702,5 +1743,29 @@ async function iniciar() {
     alert('Erro a ligar à base de dados. Verifica a tua internet.');
   }
 }
+// ==========================================
+// INICIAR JOGO AGENDADO
+// ==========================================
+async function iniciarJogoAgendado(jogo) {
+  const confirmar = confirm(
+    `Iniciar o jogo contra "${jogo.adversario}"?\n\n` +
+    `O cronómetro vai começar a contar.\n` +
+    `Os titulares escolhidos entram em campo.`
+  );
+  if (!confirmar) return;
 
+  // Marca como não agendado e coloca os titulares em campo
+  jogo.agendado = false;
+  jogo.pausado = false;
+  jogo.emCampo = jogo.titulares.slice();
+  jogo.minuto = 0;
+  jogo.segundo = 0;
+  jogo.parte = 1;
+
+  await dbGuardarJogo(jogo);
+
+  // Abre o ecrã do jogo e arranca
+  iniciarJogo(jogo);
+  mostrarEcra('ecra-jogo');
+}
 iniciar();
