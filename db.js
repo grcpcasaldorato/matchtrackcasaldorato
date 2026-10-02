@@ -89,10 +89,10 @@ async function dbCarregarJogos() {
     parte: jogo.parte || 1,
     terminado: jogo.terminado || false,
     pausado: jogo.pausado || false,
+    agendado: jogo.agendado || false,   // ⬅️ NOVO
     criadoEm: jogo.criado_em ? new Date(jogo.criado_em).getTime() : Date.now()
   }));
 }
-
 async function dbGuardarJogo(jogo) {
   const payload = {
     id: jogo.id,
@@ -110,7 +110,8 @@ async function dbGuardarJogo(jogo) {
     segundo: jogo.segundo || 0,
     parte: jogo.parte || 1,
     terminado: jogo.terminado || false,
-    pausado: jogo.pausado || false
+    pausado: jogo.pausado || false,
+    agendado: jogo.agendado || false   // ⬅️ NOVO
   };
 
   console.log('📤 A gravar jogo:', payload);
@@ -128,18 +129,6 @@ async function dbGuardarJogo(jogo) {
   }
   return data;
 }
-async function dbRemoverJogo(id) {
-  const { error } = await sb
-    .from('jogos')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    console.error('Erro a remover jogo:', error);
-    throw error;
-  }
-}
-
 // ==========================================
 // BULK — import/export
 // ==========================================
