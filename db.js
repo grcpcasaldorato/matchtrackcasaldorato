@@ -129,6 +129,17 @@ async function dbGuardarJogo(jogo) {
   }
   return data;
 }
+async function dbRemoverJogo(id) {
+  const { error } = await sb
+    .from('jogos')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Erro a remover jogo:', error);
+    throw error;
+  }
+}
 // ==========================================
 // BULK — import/export
 // ==========================================
