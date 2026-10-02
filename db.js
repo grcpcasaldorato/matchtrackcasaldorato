@@ -72,13 +72,14 @@ async function dbCarregarJogos() {
     return [];
   }
 
-  return (data || []).map(jogo => ({
+    return (data || []).map(jogo => ({
     id: jogo.id,
     data: jogo.data,
     adversario: jogo.adversario,
     competicao: jogo.competicao,
     convocados: jogo.convocados || [],
     titulares: jogo.titulares || [],
+    banco: jogo.banco || [],
     emCampo: jogo.emCampo || [],
     eventos: jogo.eventos || [],
     substituicoes: jogo.substituicoes || [],
@@ -94,13 +95,14 @@ async function dbCarregarJogos() {
   }));
 }
 async function dbGuardarJogo(jogo) {
-  const payload = {
+     const payload = {
     id: jogo.id,
     data: jogo.data,
     adversario: jogo.adversario,
     competicao: jogo.competicao || null,
     convocados: jogo.convocados || [],
     titulares: jogo.titulares || [],
+    banco: jogo.banco || [],
     emCampo: jogo.emCampo || [],
     eventos: jogo.eventos || [],
     substituicoes: jogo.substituicoes || [],
@@ -111,7 +113,7 @@ async function dbGuardarJogo(jogo) {
     parte: jogo.parte || 1,
     terminado: jogo.terminado || false,
     pausado: jogo.pausado || false,
-    agendado: jogo.agendado || false   // ⬅️ NOVO
+    agendado: jogo.agendado || false
   };
 
   console.log('📤 A gravar jogo:', payload);

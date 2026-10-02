@@ -144,14 +144,13 @@
       <input type="text" id="input-competicao" class="input-grande" placeholder="Ex: Campeonato Distrital">
     </div>
 
-    <h3 style="margin-top:8px">Convocatória</h3>
+        <h3 style="margin-top:8px">Convocatória</h3>
     <p class="sub" style="font-size:13px">
-      1º toque = Titular · 2º toque = Banco · 3º toque = Fora
+      Toca nos jogadores para os convocar (para o banco)
     </p>
 
     <div class="conv-resumo">
-      <span class="conv-resumo-titular">Titulares: <strong id="count-titulares">0</strong>/5</span>
-      <span class="conv-resumo-banco">Banco: <strong id="count-banco">0</strong></span>
+      <span class="conv-resumo-titular" style="color:#dc2626">Convocados: <strong id="count-convocados">0</strong></span>
     </div>
 
     <ul id="lista-convocatoria" class="lista-jogadores"></ul>
@@ -310,7 +309,26 @@
       <button id="btn-voltar-home-5" class="btn-secundario">← Voltar</button>
     </div>
   </section>
+  <!-- ============ PAINEL DE ESCOLHA DE TITULARES ============ -->
+  <div id="painel-titulares" class="painel-acoes escondido">
+    <div class="painel-acoes-titulo">Escolhe os 5 iniciais</div>
 
+    <p class="sub" style="font-size:13px;text-align:center">
+      1º toque = Titular · 2º toque = Banco · 3º toque = Fora
+    </p>
+
+    <div class="conv-resumo">
+      <span class="conv-resumo-titular">Titulares: <strong id="tit-count-titulares">0</strong>/5</span>
+      <span class="conv-resumo-banco">Banco: <strong id="tit-count-banco">0</strong></span>
+    </div>
+
+    <ul id="lista-titulares" class="lista-jogadores"></ul>
+
+    <div class="sub-botoes">
+      <button id="btn-cancelar-titulares" class="btn-secundario">Cancelar</button>
+      <button id="btn-confirmar-titulares" class="btn-primario" disabled>Confirmar</button>
+    </div>
+  </div>
   <!-- ============ PAINEL DE EDIÇÃO DE JOGADOR ============ -->
   <div id="painel-editar-jogador" class="painel-acoes escondido">
     <div class="painel-acoes-titulo">Editar Jogador</div>

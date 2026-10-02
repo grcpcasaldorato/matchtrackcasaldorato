@@ -11,6 +11,8 @@ const estado = {
 let jogoTemporario = null;
 let subEscolhida = { saiId: null, entraId: null };
 let jogadorEmEdicaoId = null;
+let jogoAIniciar = null;
+let escolhaTitulares = { titulares: [], banco: [] };
 
 // ==========================================
 // NAVEGAÇÃO — mapa de voltar
@@ -237,7 +239,6 @@ async function renderizarListaJogos() {
     const li = document.createElement('li');
     const dataFmt = new Date(j.data).toLocaleDateString('pt-PT');
 
-    // Define o texto e a classe do estado
     let estadoTxt, estadoCls;
     if (j.agendado) {
       estadoTxt = '📅 Agendado';
@@ -250,29 +251,35 @@ async function renderizarListaJogos() {
       estadoCls = '';
     }
 
-    // Botão "Iniciar" só aparece se estiver agendado
-        // O botão ▶️ Iniciar já não aparece no home
-    const botaoIniciar = '';
+    li.innerHTML = `
+      <div class="jogo-topo">
+        <span>vs ${j.adversario}</span>
+        <span class="jogo-res">
+          ${j.golosCasa} - ${j.golosFora}
+          <button class="btn-apagar-jogo" title="Apagar jogo">🗑️</button>
+        </span>
+      </div>
+      <div class="jogo-sub">
+        ${dataFmt}${j.competicao ? ' · ' + j.competicao : ''}
+        <span class="estado ${estadoCls}" style="margin-left:8px">${estadoTxt}</span>
+      </div>
+    `;
 
-li.innerHTML = `
-  <div class="jogo-topo">
-    <span>vs ${j.adversario}</span>
-    <span class="jogo-res">
-      ${j.golosCasa} - ${j.golosFora}
-      <button class="btn-apagar-jogo" title="Apagar jogo">🗑️</button>
-    </span>
-  </div>
-  <div class="jogo-sub">
-    ${dataFmt}${j.competicao ? ' · ' + j.competicao : ''}
-    <span class="estado ${estadoCls}" style="margin-left:8px">${estadoTxt}</span>
-    ${botaoIniciar}
-  </div>
-`;
+    li.onclick = () => {
+      if (j.agendado) {
+        // Se ainda não tem titulares definidos → abre painel para escolher
+        if (!j.titulares || j.titulares.length === 0) {
+          abrirPainelTitulares(j);
+        } else {
+          // Já tem titulares → abre o ecrã do jogo (botão ▶️ Iniciar Jogo)
+          iniciarJogo(j);
+          mostrarEcra('ecra-jogo');
+        }
+      } else {
+        retomarJogo(j);
+      }
+    };
 
-    // Clique no item → abre o jogo (retomar, se já começou; se agendado, abre igual)
-    li.onclick = () => retomarJogo(j);
-
-    // Clique no 🗑️ → apaga
     li.querySelector('.btn-apagar-jogo').onclick = async (e) => {
       e.stopPropagation();
       const confirmar = confirm(
@@ -289,6 +296,7 @@ li.innerHTML = `
     lista.appendChild(li);
   });
 }
+
 // ==========================================
 // NOVO JOGO
 // ==========================================
@@ -297,7 +305,7 @@ document.getElementById('btn-novo-jogo').onclick = () => {
   document.getElementById('input-data').valueAsDate = new Date();
   document.getElementById('input-adversario').value = '';
   document.getElementById('input-competicao').value = '';
-  jogoTemporario = { titulares: [], banco: [] };
+  jogoTemporario = { convocados: [] };
   renderizarConvocatoria();
   mostrarEcra('ecra-novo-jogo');
 };
@@ -306,14 +314,97 @@ function renderizarConvocatoria() {
   const lista = document.getElementById('lista-convocatoria');
   lista.innerHTML = '';
 
-  const ctEl = document.getElementById('count-titulares');
-  const cbEl = document.getElementById('count-banco');
-  if (ctEl) ctEl.textContent = jogoTemporario.titulares.length;
-  if (cbEl) cbEl.textContent = jogoTemporario.banco.length;
+  const ccEl = document.getElementById('count-convocados');
+  if (ccEl) ccEl.textContent = jogoTemporario.convocados.length;
 
   ordenarJogadores(estado.plantel).forEach(j => {
-    const isTitular = jogoTemporario.titulares.includes(j.id);
-    const isBanco = jogoTemporario.banco.includes(j.id);
+    const convocado = jogoTemporario.convocados.includes(j.id);
+
+    const li = document.createElement('li');
+    li.dataset.pos = j.posicao || 'ALA';
+    if (convocado) li.classList.add('titular');
+
+    li.innerHTML = `
+      <span class="num">${j.numero}</span>
+      <span class="nome">${j.nome}</span>
+      <span class="pos-tag pos-${j.posicao || 'ALA'}">${j.posicao || 'ALA'}</span>
+      <span class="estado-conv ${convocado ? 'titular' : 'fora'}">${convocado ? '✓ CONVOCADO' : 'Toca'}</span>
+    `;
+
+    li.onclick = () => {
+      if (convocado) {
+        jogoTemporario.convocados = jogoTemporario.convocados.filter(id => id !== j.id);
+      } else {
+        jogoTemporario.convocados.push(j.id);
+      }
+      renderizarConvocatoria();
+    };
+    lista.appendChild(li);
+  });
+}
+
+document.getElementById('btn-guardar-agendado').onclick = async () => {
+  const data = document.getElementById('input-data').value;
+  const adversario = document.getElementById('input-adversario').value.trim();
+  const competicao = document.getElementById('input-competicao').value.trim();
+
+  if (!data) return alert('Escolhe a data!');
+  if (!adversario) return alert('Escreve o adversário!');
+  if (jogoTemporario.convocados.length === 0) return alert('Escolhe pelo menos 1 convocado!');
+
+  const novoJogo = {
+    id: 'j_' + Date.now(),
+    data, adversario, competicao,
+    convocados: jogoTemporario.convocados.slice(),
+    titulares: [],
+    banco: [],
+    emCampo: [],
+    eventos: [], golosCasa: 0, golosFora: 0,
+    minuto: 0, segundo: 0, parte: 1,
+    terminado: false,
+    pausado: true,
+    agendado: true,
+    substituicoes: [], criadoEm: Date.now()
+  };
+
+  await dbGuardarJogo(novoJogo);
+  jogoTemporario = null;
+
+  await renderizarListaJogos();
+  mostrarEcra('ecra-home');
+
+  setTimeout(() => alert('✅ Jogo agendado! Escolhe os 5 iniciais no dia do jogo.'), 100);
+};
+
+// ==========================================
+// ESCOLHA DE TITULARES (antes do jogo começar)
+// ==========================================
+const painelTitulares = document.getElementById('painel-titulares');
+
+function abrirPainelTitulares(jogo) {
+  jogoAIniciar = jogo;
+  escolhaTitulares = { titulares: [], banco: [] };
+
+  renderizarListaTitulares();
+  document.getElementById('btn-confirmar-titulares').disabled = true;
+
+  painelTitulares.classList.remove('escondido');
+}
+
+function renderizarListaTitulares() {
+  const lista = document.getElementById('lista-titulares');
+  lista.innerHTML = '';
+
+  const ctEl = document.getElementById('tit-count-titulares');
+  const cbEl = document.getElementById('tit-count-banco');
+  if (ctEl) ctEl.textContent = escolhaTitulares.titulares.length;
+  if (cbEl) cbEl.textContent = escolhaTitulares.banco.length;
+
+  ordenarJogadores(
+    estado.plantel.filter(j => jogoAIniciar.convocados.includes(j.id))
+  ).forEach(j => {
+    const isTitular = escolhaTitulares.titulares.includes(j.id);
+    const isBanco = escolhaTitulares.banco.includes(j.id);
 
     const li = document.createElement('li');
     li.dataset.pos = j.posicao || 'ALA';
@@ -332,52 +423,89 @@ function renderizarConvocatoria() {
 
     li.onclick = () => {
       if (isTitular) {
-        jogoTemporario.titulares = jogoTemporario.titulares.filter(id => id !== j.id);
-        jogoTemporario.banco.push(j.id);
+        escolhaTitulares.titulares = escolhaTitulares.titulares.filter(id => id !== j.id);
+        escolhaTitulares.banco.push(j.id);
       } else if (isBanco) {
-        jogoTemporario.banco = jogoTemporario.banco.filter(id => id !== j.id);
+        escolhaTitulares.banco = escolhaTitulares.banco.filter(id => id !== j.id);
       } else {
-        jogoTemporario.titulares.push(j.id);
+        if (escolhaTitulares.titulares.length >= 5) {
+          alert('Já tens 5 titulares. Toca num deles para o passar a banco.');
+          return;
+        }
+        escolhaTitulares.titulares.push(j.id);
       }
-      renderizarConvocatoria();
+      renderizarListaTitulares();
+      document.getElementById('btn-confirmar-titulares').disabled =
+        escolhaTitulares.titulares.length === 0;
     };
     lista.appendChild(li);
   });
 }
 
-document.getElementById('btn-guardar-agendado').onclick = async () => {
-  const data = document.getElementById('input-data').value;
-  const adversario = document.getElementById('input-adversario').value.trim();
-  const competicao = document.getElementById('input-competicao').value.trim();
-
-  if (!data) return alert('Escolhe a data!');
-  if (!adversario) return alert('Escreve o adversário!');
-  if (jogoTemporario.titulares.length === 0) return alert('Escolhe pelo menos 1 titular!');
-
-  const todosConvocados = [...jogoTemporario.titulares, ...jogoTemporario.banco];
-
-  const novoJogo = {
-    id: 'j_' + Date.now(),
-    data, adversario, competicao,
-    convocados: todosConvocados,
-    titulares: jogoTemporario.titulares.slice(),
-    emCampo: [],                          // vazio — só enche quando iniciar
-    eventos: [], golosCasa: 0, golosFora: 0,
-    minuto: 0, segundo: 0, parte: 1,
-    terminado: false,
-    pausado: true,                        // pausado até arrancar
-    agendado: true,                       // ⬅️ NOVO — está agendado, ainda não começou
-    substituicoes: [], criadoEm: Date.now()
-  };
-await dbGuardarJogo(novoJogo);
-  jogoTemporario = null;
-
-  await renderizarListaJogos();
-  mostrarEcra('ecra-home');
-
-  // Aviso não-bloqueante (não interrompe o fluxo)
-  setTimeout(() => alert('✅ Jogo agendado! Vai ao home para o iniciar quando for a hora.'), 100);
+document.getElementById('btn-cancelar-titulares').onclick = () => {
+  painelTitulares.classList.add('escondido');
+  jogoAIniciar = null;
+  escolhaTitulares = { titulares: [], banco: [] };
 };
+
+document.getElementById('btn-confirmar-titulares').onclick = async () => {
+  if (!jogoAIniciar) return;
+  if (escolhaTitulares.titulares.length === 0) {
+    alert('Escolhe pelo menos 1 titular.');
+    return;
+  }
+
+  const confirmar = confirm(
+    `Confirmar as escolhas?\n\n` +
+    `Titulares: ${escolhaTitulares.titulares.length}\n` +
+    `Banco: ${escolhaTitulares.banco.length}\n\n` +
+    `Vais entrar no ecrã do jogo. Clica em ▶️ Iniciar Jogo quando estiveres pronto.`
+  );
+  if (!confirmar) return;
+
+  jogoAIniciar.titulares = escolhaTitulares.titulares.slice();
+  jogoAIniciar.banco = escolhaTitulares.banco.slice();
+  jogoAIniciar.emCampo = escolhaTitulares.titulares.slice();
+  jogoAIniciar.agendado = true;
+  jogoAIniciar.pausado = true;
+  jogoAIniciar.minuto = 0;
+  jogoAIniciar.segundo = 0;
+  jogoAIniciar.parte = 1;
+
+  await dbGuardarJogo(jogoAIniciar);
+
+  painelTitulares.classList.add('escondido');
+
+  iniciarJogo(jogoAIniciar);
+  mostrarEcra('ecra-jogo');
+
+  jogoAIniciar = null;
+  escolhaTitulares = { titulares: [], banco: [] };
+};
+
+// ==========================================
+// COMEÇAR JOGO (chamado pelo ▶️ Iniciar Jogo no ecrã)
+// ==========================================
+async function comecarJogoAgora() {
+  if (!estado.jogo) return;
+
+  const confirmar = confirm(
+    `Iniciar o jogo contra "${estado.jogo.adversario}"?\n\n` +
+    `O cronómetro vai começar a contar.`
+  );
+  if (!confirmar) return;
+
+  estado.jogo.agendado = false;
+  estado.jogo.pausado = false;
+  estado.jogo.minuto = 0;
+  estado.jogo.segundo = 0;
+  estado.jogo.parte = 1;
+
+  await dbGuardarJogo(estado.jogo);
+
+  iniciarJogo(estado.jogo);
+}
+
 // ==========================================
 // JOGO
 // ==========================================
@@ -397,32 +525,28 @@ function iniciarJogo(jogo) {
   atualizarBotaoPausa();
   renderizarGridJogadores();
 
-  // ---- Controlo do estado agendado ----
   const controlosTempo = document.getElementById('controlos-tempo');
   const controlosAgendado = document.getElementById('controlos-agendado');
   const btnIniciarEcra = document.getElementById('btn-iniciar-jogo-ecra');
 
   if (jogo.agendado) {
-    // Está agendado → esconde pausa/terminar, mostra Iniciar
     if (controlosTempo) controlosTempo.classList.add('escondido');
     if (controlosAgendado) controlosAgendado.classList.remove('escondido');
 
-    // Ligar o botão Iniciar
     if (btnIniciarEcra) {
       btnIniciarEcra.onclick = async () => {
-        await iniciarJogoAgendado(estado.jogo);
+        await comecarJogoAgora();
       };
     }
   } else {
-    // Já arrancou → mostra pausa/terminar, esconde Iniciar
     if (controlosTempo) controlosTempo.classList.remove('escondido');
     if (controlosAgendado) controlosAgendado.classList.add('escondido');
   }
 
-  // Só arranca o cronómetro se NÃO estiver agendado
   if (estado.cronometroInterval) clearInterval(estado.cronometroInterval);
   if (!jogo.terminado && !jogo.pausado && !jogo.agendado) arrancarCronometro();
 }
+
 function arrancarCronometro() {
   if (estado.cronometroInterval) clearInterval(estado.cronometroInterval);
   estado.cronometroInterval = setInterval(() => {
@@ -1008,7 +1132,6 @@ function renderizarRelatorio() {
     return a.segundo - b.segundo;
   });
 
-  // Separar eventos por parte
   const eventos1a = eventosCronologia.filter(ev => ev.parte === 1);
   const eventos2a = eventosCronologia.filter(ev => ev.parte === 2);
 
@@ -1418,11 +1541,10 @@ async function renderizarRanking() {
     });
   });
 
-    let arrayStats = Object.values(stats);
+  let arrayStats = Object.values(stats);
   arrayStats.forEach(s => {
     switch (metrica) {
       case 'todos':
-        // Ordena por golos+assistências mas mostra tudo
         s._valor = (s.golos * 10) + (s.assistencias * 5) + s.jogos;
         break;
       case 'golos':        s._valor = s.golos; break;
@@ -1449,7 +1571,7 @@ async function renderizarRanking() {
     return;
   }
 
-   arrayStats.forEach((s, idx) => {
+  arrayStats.forEach((s, idx) => {
     const pos = idx + 1;
     const item = document.createElement('div');
     item.className = 'rank-item pos-' + (pos <= 3 ? pos : '');
@@ -1495,7 +1617,6 @@ async function renderizarRanking() {
       </div>
     `;
 
-    // Clicar num jogador do ranking → abre o detalhe dele
     item.onclick = () => abrirDetalheJogador(s.jogador.id);
     item.style.cursor = 'pointer';
 
@@ -1509,6 +1630,7 @@ async function renderizarRanking() {
     container.appendChild(item);
   });
 }
+
 // ==========================================
 // DADOS / BACKUP
 // ==========================================
@@ -1799,30 +1921,6 @@ async function iniciar() {
     console.error('❌ Erro ao ligar:', err);
     alert('Erro a ligar à base de dados. Verifica a tua internet.');
   }
-}
-// ==========================================
-// INICIAR JOGO AGENDADO
-// ==========================================
-async function iniciarJogoAgendado(jogo) {
-  const confirmar = confirm(
-    `Iniciar o jogo contra "${jogo.adversario}"?\n\n` +
-    `O cronómetro vai começar a contar.\n` +
-    `Os titulares escolhidos entram em campo.`
-  );
-  if (!confirmar) return;
-
-  // Marca como não agendado e coloca titulares em campo
-  jogo.agendado = false;
-  jogo.pausado = false;
-  jogo.emCampo = jogo.titulares.slice();
-  jogo.minuto = 0;
-  jogo.segundo = 0;
-  jogo.parte = 1;
-
-   await dbGuardarJogo(jogo);
-
-  // Reabre o ecrã do jogo já no modo "em curso"
-  iniciarJogo(jogo);
 }
 
 iniciar();
