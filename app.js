@@ -255,18 +255,20 @@ async function renderizarListaJogos() {
       ? `<button class="btn-iniciar-jogo" data-jogo-id="${j.id}">▶️ Iniciar</button>`
       : '';
 
-    li.innerHTML = `
+li.innerHTML = `
+  <div class="jogo-topo">
+    <span>vs ${j.adversario}</span>
+    <span class="jogo-res">
+      ${j.golosCasa} - ${j.golosFora}
       <button class="btn-apagar-jogo" title="Apagar jogo">🗑️</button>
-      <div class="jogo-topo">
-        <span>vs ${j.adversario}</span>
-        <span class="jogo-res">${j.golosCasa} - ${j.golosFora}</span>
-      </div>
-      <div class="jogo-sub">
-        ${dataFmt}${j.competicao ? ' · ' + j.competicao : ''}
-        <span class="estado ${estadoCls}" style="margin-left:8px">${estadoTxt}</span>
-        ${botaoIniciar}
-      </div>
-    `;
+    </span>
+  </div>
+  <div class="jogo-sub">
+    ${dataFmt}${j.competicao ? ' · ' + j.competicao : ''}
+    <span class="estado ${estadoCls}" style="margin-left:8px">${estadoTxt}</span>
+    ${botaoIniciar}
+  </div>
+`;
 
     // Clique no item → abre o jogo (retomar, se já começou; se agendado, abre igual)
     li.onclick = () => retomarJogo(j);

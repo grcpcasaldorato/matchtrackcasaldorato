@@ -552,7 +552,6 @@ button:active { transform: scale(0.97); }
   font-weight: bold;
   font-size: 16px;
   color: var(--texto);
-  padding-right: 32px;
 }
 .lista-jogos li .jogo-sub {
   font-size: 13px;
@@ -575,25 +574,21 @@ button:active { transform: scale(0.97); }
   color: var(--vermelho-escuro);
 }
 .lista-jogos li .btn-apagar-jogo {
-  position: absolute;
-  top: 8px;
-  right: 8px;
   background: transparent;
   color: var(--texto-claro);
-  font-size: 13px;
-  padding: 2px 6px;
-  border-radius: 6px;
-  z-index: 2;
-  opacity: 0.5;
+  font-size: 14px;
+  padding: 0 0 0 8px;
+  border: none;
+  cursor: pointer;
+  opacity: 0.6;
   transition: opacity 0.15s;
+  vertical-align: middle;
 }
 .lista-jogos li .btn-apagar-jogo:hover,
 .lista-jogos li .btn-apagar-jogo:active {
   opacity: 1;
-  background: var(--vermelho);
-  color: #fff;
+  color: var(--vermelho);
 }
-
 /* ============ FORM NOVO JOGO ============ */
 .campo-form {
   display: flex;
