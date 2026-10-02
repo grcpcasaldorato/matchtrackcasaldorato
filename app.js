@@ -1508,7 +1508,7 @@ async function renderizarRanking() {
     }
     container.appendChild(item);
   });
-
+}
 // ==========================================
 // DADOS / BACKUP
 // ==========================================
@@ -1819,8 +1819,10 @@ async function iniciarJogoAgendado(jogo) {
   jogo.segundo = 0;
   jogo.parte = 1;
 
-  await dbGuardarJogo(jogo);
+   await dbGuardarJogo(jogo);
 
   // Reabre o ecrã do jogo já no modo "em curso"
   iniciarJogo(jogo);
-}iniciar();
+}
+
+iniciar();
