@@ -378,17 +378,9 @@ document.getElementById('btn-guardar-agendado').onclick = async () => {
     substituicoes: [], criadoEm: Date.now()
   };
 
-  await dbGuardarJogo(novoJogo);
-  jogoTemporario = null;
-
   alert('✅ Jogo agendado! Vai ao home para o iniciar quando for a hora.');
   await renderizarListaJogos();
   mostrarEcra('ecra-home');
-};
-  await dbGuardarJogo(novoJogo);
-  jogoTemporario = null;
-  iniciarJogo(novoJogo);
-  mostrarEcra('ecra-jogo');
 };
 
 // ==========================================
