@@ -1008,15 +1008,34 @@ function renderizarRelatorio() {
     return a.segundo - b.segundo;
   });
 
-  const cronologiaHtml = eventosCronologia.length === 0
-    ? '<div style="color:#94a3b8;font-size:12px">Sem eventos registados.</div>'
-    : eventosCronologia.map(ev => `
+  // Separar eventos por parte
+  const eventos1a = eventosCronologia.filter(ev => ev.parte === 1);
+  const eventos2a = eventosCronologia.filter(ev => ev.parte === 2);
+
+  function renderBlocoCronologia(eventos, titulo) {
+    if (eventos.length === 0) {
+      return `
+        <div class="crono-separador">${titulo}</div>
+        <div style="color:#94a3b8;font-size:12px;padding-left:8px">Sem eventos registados.</div>
+      `;
+    }
+    return `
+      <div class="crono-separador">${titulo}</div>
+      ${eventos.map(ev => `
         <div class="crono-item ${ev.classeExtra}">
           <span class="crono-min">${ev.minuto}'</span>
           <span class="crono-icone">${ev.icone}</span>
           <span class="crono-txt">${ev.descricao}</span>
         </div>
-      `).join('');
+      `).join('')}
+    `;
+  }
+
+  const cronologiaHtml =
+    (eventosCronologia.length === 0)
+      ? '<div style="color:#94a3b8;font-size:12px">Sem eventos registados.</div>'
+      : renderBlocoCronologia(eventos1a, '🔴 1ª Parte') +
+        renderBlocoCronologia(eventos2a, '🟢 2ª Parte');
 
   document.getElementById('relatorio-conteudo').innerHTML = `
     <div class="rel-header">
@@ -1399,9 +1418,13 @@ async function renderizarRanking() {
     });
   });
 
-  let arrayStats = Object.values(stats);
+    let arrayStats = Object.values(stats);
   arrayStats.forEach(s => {
     switch (metrica) {
+      case 'todos':
+        // Ordena por golos+assistências mas mostra tudo
+        s._valor = (s.golos * 10) + (s.assistencias * 5) + s.jogos;
+        break;
       case 'golos':        s._valor = s.golos; break;
       case 'assistencias': s._valor = s.assistencias; break;
       case 'golosAssist':  s._valor = s.golos + s.assistencias; break;
@@ -1426,19 +1449,40 @@ async function renderizarRanking() {
     return;
   }
 
-  arrayStats.forEach((s, idx) => {
+   arrayStats.forEach((s, idx) => {
     const pos = idx + 1;
     const item = document.createElement('div');
     item.className = 'rank-item pos-' + (pos <= 3 ? pos : '');
     item.dataset.pos = s.jogador.posicao || 'ALA';
 
     let subInfo = '';
-    if (metrica === 'minutos') subInfo = `${s.jogos} jogos`;
-    else if (metrica === 'jogos') subInfo = `${s.minutos}'`;
-    else if (metrica === 'golos') subInfo = `${s.assistencias} assist.`;
-    else if (metrica === 'assistencias') subInfo = `${s.golos} golos`;
-    else if (metrica === 'golosAssist') subInfo = `${s.golos}G · ${s.assistencias}A`;
-    else if (metrica === 'cartoes') subInfo = `${s.cartoesAmarelos}🟨 · ${s.cartoesVermelhos}🟥`;
+    let valorPrincipal = '';
+
+    if (metrica === 'todos') {
+      valorPrincipal = s.golos + 'G';
+      subInfo = `${s.assistencias}A · ${s.jogos}J · ${s.minutos}'`;
+    } else if (metrica === 'minutos') {
+      valorPrincipal = s._valor + "'";
+      subInfo = `${s.jogos} jogos`;
+    } else if (metrica === 'jogos') {
+      valorPrincipal = s._valor;
+      subInfo = `${s.minutos}'`;
+    } else if (metrica === 'golos') {
+      valorPrincipal = s._valor;
+      subInfo = `${s.assistencias} assist.`;
+    } else if (metrica === 'assistencias') {
+      valorPrincipal = s._valor;
+      subInfo = `${s.golos} golos`;
+    } else if (metrica === 'golosAssist') {
+      valorPrincipal = s._valor;
+      subInfo = `${s.golos}G · ${s.assistencias}A`;
+    } else if (metrica === 'cartoes') {
+      valorPrincipal = s._valor;
+      subInfo = `${s.cartoesAmarelos}🟨 · ${s.cartoesVermelhos}🟥`;
+    } else {
+      valorPrincipal = s._valor;
+      subInfo = '';
+    }
 
     item.innerHTML = `
       <span class="rank-pos">${pos}</span>
@@ -1446,10 +1490,14 @@ async function renderizarRanking() {
       <span class="nome">${s.jogador.nome}</span>
       <span class="pos-tag pos-${s.jogador.posicao || 'ALA'}">${s.jogador.posicao || 'ALA'}</span>
       <div style="text-align:right">
-        <div class="valor">${metrica === 'minutos' ? s._valor + "'" : s._valor}</div>
+        <div class="valor">${valorPrincipal}</div>
         <div class="rank-sub">${subInfo}</div>
       </div>
     `;
+
+    // Clicar num jogador do ranking → abre o detalhe dele
+    item.onclick = () => abrirDetalheJogador(s.jogador.id);
+    item.style.cursor = 'pointer';
 
     const corPos = {
       GR: '#eab308', FIXO: '#3b82f6', ALA: '#22c55e',
@@ -1460,7 +1508,6 @@ async function renderizarRanking() {
     }
     container.appendChild(item);
   });
-}
 
 // ==========================================
 // DADOS / BACKUP

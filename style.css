@@ -1572,3 +1572,14 @@ button:active { transform: scale(0.97); }
 .btn-iniciar-jogo {
   display: none !important;
 }
+/* Separador de partes na cronologia */
+.crono-separador {
+  font-weight: bold;
+  font-size: 13px;
+  color: var(--vermelho);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 10px 0 6px;
+  margin-top: 8px;
+  border-bottom: 2px solid var(--vermelho);
+}
