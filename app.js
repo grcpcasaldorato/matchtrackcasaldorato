@@ -251,9 +251,8 @@ async function renderizarListaJogos() {
     }
 
     // Botão "Iniciar" só aparece se estiver agendado
-    const botaoIniciar = j.agendado
-      ? `<button class="btn-iniciar-jogo" data-jogo-id="${j.id}">▶️ Iniciar</button>`
-      : '';
+        // O botão ▶️ Iniciar já não aparece no home
+    const botaoIniciar = '';
 
 li.innerHTML = `
   <div class="jogo-topo">
@@ -286,15 +285,6 @@ li.innerHTML = `
       await dbRemoverJogo(j.id);
       await renderizarListaJogos();
     };
-
-    // Clique no "▶️ Iniciar" → arranca o jogo
-    const btnIniciar = li.querySelector('.btn-iniciar-jogo');
-    if (btnIniciar) {
-      btnIniciar.onclick = (e) => {
-        e.stopPropagation();
-        iniciarJogoAgendado(j);
-      };
-    }
 
     lista.appendChild(li);
   });
@@ -396,6 +386,7 @@ function iniciarJogo(jogo) {
   if (!estado.jogo.emCampo) estado.jogo.emCampo = jogo.convocados.slice();
   if (!estado.jogo.substituicoes) estado.jogo.substituicoes = [];
   if (estado.jogo.pausado === undefined) estado.jogo.pausado = false;
+  if (estado.jogo.agendado === undefined) estado.jogo.agendado = false;
 
   const advEl = document.getElementById('header-adversario');
   if (advEl) advEl.textContent = jogo.adversario;
@@ -406,10 +397,32 @@ function iniciarJogo(jogo) {
   atualizarBotaoPausa();
   renderizarGridJogadores();
 
-  if (estado.cronometroInterval) clearInterval(estado.cronometroInterval);
-  if (!jogo.terminado && !jogo.pausado) arrancarCronometro();
-}
+  // ---- Controlo do estado agendado ----
+  const controlosTempo = document.getElementById('controlos-tempo');
+  const controlosAgendado = document.getElementById('controlos-agendado');
+  const btnIniciarEcra = document.getElementById('btn-iniciar-jogo-ecra');
 
+  if (jogo.agendado) {
+    // Está agendado → esconde pausa/terminar, mostra Iniciar
+    if (controlosTempo) controlosTempo.classList.add('escondido');
+    if (controlosAgendado) controlosAgendado.classList.remove('escondido');
+
+    // Ligar o botão Iniciar
+    if (btnIniciarEcra) {
+      btnIniciarEcra.onclick = async () => {
+        await iniciarJogoAgendado(estado.jogo);
+      };
+    }
+  } else {
+    // Já arrancou → mostra pausa/terminar, esconde Iniciar
+    if (controlosTempo) controlosTempo.classList.remove('escondido');
+    if (controlosAgendado) controlosAgendado.classList.add('escondido');
+  }
+
+  // Só arranca o cronómetro se NÃO estiver agendado
+  if (estado.cronometroInterval) clearInterval(estado.cronometroInterval);
+  if (!jogo.terminado && !jogo.pausado && !jogo.agendado) arrancarCronometro();
+}
 function arrancarCronometro() {
   if (estado.cronometroInterval) clearInterval(estado.cronometroInterval);
   estado.cronometroInterval = setInterval(() => {
@@ -1751,7 +1764,7 @@ async function iniciarJogoAgendado(jogo) {
   );
   if (!confirmar) return;
 
-  // Marca como não agendado e coloca os titulares em campo
+  // Marca como não agendado e coloca titulares em campo
   jogo.agendado = false;
   jogo.pausado = false;
   jogo.emCampo = jogo.titulares.slice();
@@ -1761,8 +1774,6 @@ async function iniciarJogoAgendado(jogo) {
 
   await dbGuardarJogo(jogo);
 
-  // Abre o ecrã do jogo e arranca
+  // Reabre o ecrã do jogo já no modo "em curso"
   iniciarJogo(jogo);
-  mostrarEcra('ecra-jogo');
-}
-iniciar();
+}iniciar();

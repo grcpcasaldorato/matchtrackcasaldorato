@@ -1551,3 +1551,24 @@ button:active { transform: scale(0.97); }
   background: #dbeafe;
   color: #1e40af;
 }
+/* ============ BOTÃO INICIAR NO ECRÃ DO JOGO ============ */
+.btn-iniciar-grande {
+  background: var(--verde);
+  color: #fff;
+  padding: 18px 24px;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 12px;
+  width: 100%;
+  border: none;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35);
+}
+.btn-iniciar-grande:active {
+  transform: scale(0.98);
+  background: #15803d;
+}
+
+/* Esconde o botão ▶️ Iniciar na lista de jogos (home) */
+.btn-iniciar-jogo {
+  display: none !important;
+}
