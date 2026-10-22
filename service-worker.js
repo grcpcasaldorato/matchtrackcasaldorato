@@ -4,7 +4,7 @@
 // Permite funcionar offline e ter comportamento de app nativa
 // ==========================================
 
-const CACHE_NAME = 'matchtrack-v5';
+const CACHE_NAME = 'matchtrack-v6';
 const FICHEIROS_CACHE = [
   './',
   './index.html',
