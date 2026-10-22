@@ -518,48 +518,83 @@ button:active { transform: scale(0.97); }
 .cartao-jogador.vazio { opacity: 0.55; }
 
 /* ============ HOME — LISTA DE JOGOS ============ */
+/* Botão Novo Jogo (FAB - Centrado no fundo) */
 .btn-grande {
-  padding: 14px;
-  font-size: 16px;
-  width: 100%;
+  position: fixed;
+  bottom: 85px; /* Fica acima da barra de botões */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  background: var(--vermelho);
+  color: #fff;
+  width: auto;
+  height: auto;
+  padding: 16px 32px;
+  font-size: 18px;
+  border-radius: 50px;
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.1s, background 0.1s;
 }
 
+.btn-grande:active {
+  transform: translateX(-50%) scale(0.95);
+  background: var(--vermelho-escuro);
+}
+
+.btn-grande:hover {
+  background: var(--vermelho-escuro);
+}
 .lista-jogos {
   list-style: none;
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px; /* Mais espaço entre cartões */
+  padding-bottom: 80px; /* Espaço para o botão flutuante não tapar o último jogo */
 }
+
 .lista-jogos li {
   background: var(--bg-card);
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 16px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
-  border-left: 5px solid var(--vermelho);
+  border-left: 6px solid var(--vermelho);
   position: relative;
-  box-shadow: var(--sombra);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.1s;
 }
-.lista-jogos li:active { background: var(--bg-suave); }
+.lista-jogos li:active { 
+  transform: scale(0.99);
+  background: var(--bg-suave); 
+}
+
 .lista-jogos li .jogo-topo {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: bold;
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 17px;
   color: var(--texto);
+  padding-right: 32px;
 }
 .lista-jogos li .jogo-sub {
   font-size: 13px;
   color: var(--texto-suave);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .lista-jogos li .jogo-res {
-  font-size: 20px;
-  font-weight: bold;
+  font-size: 22px;
+  font-weight: 800;
   color: var(--verde);
 }
 .lista-jogos li .estado {
@@ -1223,22 +1258,27 @@ button:active { transform: scale(0.97); }
     font-size: 14px;
     padding: 10px 14px;
   }
-  .btn-grande {
-    padding: 12px;
+    .btn-grande {
+    bottom: 75px;
+    padding: 12px 24px;
     font-size: 15px;
   }
 
   /* Empilhar botões de navegação em ecrãs pequenos */
   .acoes-fundo {
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .acoes-fundo button {
-    flex: 1 1 calc(50% - 3px);
-    min-width: 0;
-    padding: 10px 8px;
-    font-size: 13px;
-  }
+  display: flex;
+  gap: 6px; /* Diminuí o espaço entre eles */
+  padding-top: 12px;
+  border-top: 1px solid var(--borda);
+  padding-bottom: 8px;
+}
+
+.acoes-fundo button {
+  flex: 1; /* Força todos a dividir o espaço igualmente */
+  padding: 12px 4px; /* Menos padding lateral */
+  font-size: 13px; /* Fonte ligeiramente mais pequena para caber */
+  white-space: nowrap;
+}
 
   /* ---------- LISTAS DE JOGADORES ---------- */
   .lista-jogadores li {
@@ -1261,10 +1301,10 @@ button:active { transform: scale(0.97); }
     padding: 12px;
   }
   .lista-jogos li .jogo-topo {
-    font-size: 14px;
+    font-size: 15px;
     padding-right: 28px;
   }
-  .lista-jogos li .jogo-res { font-size: 18px; }
+  .lista-jogos li .jogo-res { font-size: 20px; }
   .lista-jogos li .jogo-sub { font-size: 12px; }
 
   /* ---------- ECRÃ JOGO ---------- */
@@ -1582,4 +1622,19 @@ button:active { transform: scale(0.97); }
   padding: 10px 0 6px;
   margin-top: 8px;
   border-bottom: 2px solid var(--vermelho);
+}
+/* ============ ESCONDER BOTÕES DE VOLTAR ANTIGOS ============ */
+/* O botão flutuante vermelho já faz este trabalho em todos os ecrãs */
+#btn-voltar-home-1,
+#btn-voltar-home-2,
+#btn-voltar-home-3,
+#btn-voltar-home-4,
+#btn-voltar-home-5,
+#btn-voltar-jogadores {
+  display: none !important;
+}
+
+/* Como escondemos o botão de voltar, fazemos o botão principal ocupar o espaço todo */
+.acoes-fundo button:not(.escondido) {
+  flex: 1;
 }

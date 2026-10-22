@@ -39,13 +39,19 @@ function atualizarBotaoVoltar() {
   }
 }
 
-document.getElementById('btn-voltar-global').onclick = () => {
+document.getElementById('btn-voltar-global').onclick = async () => {
   const visivel = document.querySelector('.ecra:not(.escondido)');
   if (!visivel) return;
   const destino = VOLTAR_PARA[visivel.id];
-  if (destino) mostrarEcra(destino);
+  
+  if (destino) {
+    // Se estivermos a voltar para a lista de jogadores, volta a desenhar a lista
+    if (destino === 'ecra-jogadores') {
+      await renderizarListaJogadores();
+    }
+    mostrarEcra(destino);
+  }
 };
-
 // ==========================================
 // ORDENAÇÃO DE JOGADORES
 // ==========================================
@@ -67,39 +73,42 @@ function calcularMinutosPorJogo(jogo, jogadorId) {
   const convocados = jogo.convocados || [];
   if (!convocados.includes(jogadorId)) return 0;
 
+  // 1. Definir a duração total do jogo (padrão: 20 min na 1ª parte)
   let duracaoTotal = 0;
   if (jogo.terminado) {
-    let maxMin = jogo.minuto || 0;
-    (jogo.eventos || []).forEach(ev => {
-      if (ev.minuto > maxMin) maxMin = ev.minuto;
-    });
-    duracaoTotal = maxMin + 1;
+    duracaoTotal = jogo.parte === 2 ? (20 + jogo.minuto) : jogo.minuto;
   } else {
-    duracaoTotal = jogo.minuto || 0;
+    duracaoTotal = jogo.parte === 2 ? (20 + jogo.minuto) : jogo.minuto;
   }
 
-  const subsJogador = (jogo.substituicoes || []).filter(s =>
-    s.saiId === jogadorId || s.entraId === jogadorId
-  );
+  // 2. Verificar se foi titular (lida com listas vazias ou IDs diferentes)
+  const listaTitulares = (jogo.titulares && jogo.titulares.length > 0) ? jogo.titulares : convocados;
+  const esteveDesdeInicio = listaTitulares.includes(jogadorId);
+  
+  const subsJogador = (jogo.substituicoes || []).filter(s => s.saiId === jogadorId || s.entraId === jogadorId);
+  const temEventos = (jogo.eventos || []).some(ev => ev.jogadorId === jogadorId);
 
-  let entrouEm = null;
+  // 3. Se ele tem eventos e não há registo de substituição, é porque jogou o jogo todo!
+  if (!esteveDesdeInicio && subsJogador.length === 0 && temEventos) {
+    return duracaoTotal;
+  }
+
+  // 4. Cálculo normal
+  let entrouEm = esteveDesdeInicio ? 0 : null;
   let saiuEm = null;
-  const esteveDesdeInicio = (jogo.titulares || jogo.convocados || []).includes(jogadorId);
-  if (esteveDesdeInicio) entrouEm = 0;
 
-  subsJogador
-    .sort((a, b) => (a.parte - b.parte) * 1000 + a.minuto - b.minuto)
-    .forEach(s => {
-      const minutoEfetivo = (s.parte - 1) * (duracaoTotal / 2) + s.minuto;
-      if (s.entraId === jogadorId) entrouEm = minutoEfetivo;
-      else if (s.saiId === jogadorId) saiuEm = minutoEfetivo;
-    });
+  subsJogador.forEach(s => {
+    // Se a substituição foi na 2ª parte, soma os 20 min da 1ª parte
+    const minutoReal = (s.parte === 2 ? 20 : 0) + s.minuto;
+    if (s.entraId === jogadorId) entrouEm = minutoReal;
+    if (s.saiId === jogadorId) saiuEm = minutoReal;
+  });
 
-  if (entrouEm === null) return 0;
+  if (entrouEm === null) return 0; 
+
   const fim = saiuEm !== null ? saiuEm : duracaoTotal;
   return Math.max(0, Math.round(fim - entrouEm));
 }
-
 // ==========================================
 // NAVEGAÇÃO
 // ==========================================
@@ -521,7 +530,6 @@ function iniciarJogo(jogo) {
 
   atualizarCronometro();
   atualizarResultado();
-  atualizarIndicadorParte();
   atualizarBotaoPausa();
   renderizarGridJogadores();
 
@@ -530,6 +538,7 @@ function iniciarJogo(jogo) {
   const btnIniciarEcra = document.getElementById('btn-iniciar-jogo-ecra');
 
   if (jogo.agendado) {
+    // Jogo agendado: esconde pausa/terminar, mostra Iniciar
     if (controlosTempo) controlosTempo.classList.add('escondido');
     if (controlosAgendado) controlosAgendado.classList.remove('escondido');
 
@@ -539,14 +548,22 @@ function iniciarJogo(jogo) {
       };
     }
   } else {
-    if (controlosTempo) controlosTempo.classList.remove('escondido');
+    // Jogo não agendado (em curso ou terminado)
     if (controlosAgendado) controlosAgendado.classList.add('escondido');
+    
+    // Se já terminou, esconde os controlos de tempo definitivamente
+    if (jogo.terminado) {
+      if (controlosTempo) controlosTempo.classList.add('escondido');
+    } else {
+      if (controlosTempo) controlosTempo.classList.remove('escondido');
+    }
   }
+
+  atualizarIndicadorParte(); // Chama no fim para garantir que a classe 'terminado' se aplica
 
   if (estado.cronometroInterval) clearInterval(estado.cronometroInterval);
   if (!jogo.terminado && !jogo.pausado && !jogo.agendado) arrancarCronometro();
 }
-
 function arrancarCronometro() {
   if (estado.cronometroInterval) clearInterval(estado.cronometroInterval);
   estado.cronometroInterval = setInterval(() => {
@@ -735,12 +752,17 @@ function atualizarIndicadorParte() {
   const btnParte = document.getElementById('btn-proxima-parte');
   const controlos = document.getElementById('controlos-tempo');
   const aviso = document.getElementById('aviso-terminado');
+  const btnGuardar = document.getElementById('btn-guardar-jogo'); // ⬅️ NOVO
 
   if (estado.jogo.terminado) {
     if (parteEl) { parteEl.textContent = 'Fim'; parteEl.classList.remove('pausado'); parteEl.classList.add('terminado'); }
     if (cronEl) { cronEl.classList.remove('pausado'); cronEl.classList.add('terminado'); }
     if (controlos) controlos.classList.add('escondido');
     if (aviso) aviso.classList.remove('escondido');
+    
+    // ⬇️ NOVO: Esconder o botão Guardar Jogo se já terminou
+    if (btnGuardar) btnGuardar.classList.add('escondido'); 
+    
     return;
   }
 
@@ -748,6 +770,9 @@ function atualizarIndicadorParte() {
   if (aviso) aviso.classList.add('escondido');
   if (parteEl) parteEl.classList.remove('terminado');
   if (cronEl) cronEl.classList.remove('terminado');
+  
+  // ⬇️ NOVO: Mostrar o botão Guardar Jogo se ainda está a decorrer
+  if (btnGuardar) btnGuardar.classList.remove('escondido'); 
 
   if (parteEl) {
     parteEl.textContent = estado.jogo.parte === 1 ? '1ª Parte' : '2ª Parte';
@@ -758,7 +783,6 @@ function atualizarIndicadorParte() {
     btnParte.textContent = estado.jogo.parte === 1 ? '⏭️ Terminar 1ª Parte' : '🏁 Terminar Jogo';
   }
 }
-
 function atualizarBotaoPausa() {
   const btn = document.getElementById('btn-pausa');
   if (!btn) return;
@@ -1215,7 +1239,10 @@ document.getElementById('btn-ir-jogadores').onclick = async () => {
   mostrarEcra('ecra-jogadores');
 };
 document.getElementById('btn-voltar-home-3').onclick = () => mostrarEcra('ecra-home');
-document.getElementById('btn-voltar-jogadores').onclick = () => mostrarEcra('ecra-jogadores');
+document.getElementById('btn-voltar-jogadores').onclick = async () => {
+  await renderizarListaJogadores();
+  mostrarEcra('ecra-jogadores');
+};
 
 async function renderizarListaJogadores() {
   const jogos = await dbCarregarJogos();
