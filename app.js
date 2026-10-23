@@ -45,12 +45,16 @@ document.getElementById('btn-voltar-global').onclick = async () => {
   const destino = VOLTAR_PARA[visivel.id];
   
   if (destino) {
-    // Se estivermos a voltar para a lista de jogadores, volta a desenhar a lista
     if (destino === 'ecra-jogadores') {
       await renderizarListaJogadores();
     }
     mostrarEcra(destino);
   }
+};
+
+document.getElementById('btn-voltar-jogadores').onclick = async () => {
+  await renderizarListaJogadores();
+  mostrarEcra('ecra-jogadores');
 };
 // ==========================================
 // ORDENAÇÃO DE JOGADORES
@@ -109,6 +113,7 @@ function calcularMinutosPorJogo(jogo, jogadorId) {
   const fim = saiuEm !== null ? saiuEm : duracaoTotal;
   return Math.max(0, Math.round(fim - entrouEm));
 }
+
 // ==========================================
 // NAVEGAÇÃO
 // ==========================================
@@ -276,11 +281,9 @@ async function renderizarListaJogos() {
 
     li.onclick = () => {
       if (j.agendado) {
-        // Se ainda não tem titulares definidos → abre painel para escolher
         if (!j.titulares || j.titulares.length === 0) {
           abrirPainelTitulares(j);
         } else {
-          // Já tem titulares → abre o ecrã do jogo (botão ▶️ Iniciar Jogo)
           iniciarJogo(j);
           mostrarEcra('ecra-jogo');
         }
@@ -538,7 +541,6 @@ function iniciarJogo(jogo) {
   const btnIniciarEcra = document.getElementById('btn-iniciar-jogo-ecra');
 
   if (jogo.agendado) {
-    // Jogo agendado: esconde pausa/terminar, mostra Iniciar
     if (controlosTempo) controlosTempo.classList.add('escondido');
     if (controlosAgendado) controlosAgendado.classList.remove('escondido');
 
@@ -548,10 +550,8 @@ function iniciarJogo(jogo) {
       };
     }
   } else {
-    // Jogo não agendado (em curso ou terminado)
     if (controlosAgendado) controlosAgendado.classList.add('escondido');
     
-    // Se já terminou, esconde os controlos de tempo definitivamente
     if (jogo.terminado) {
       if (controlosTempo) controlosTempo.classList.add('escondido');
     } else {
@@ -559,11 +559,12 @@ function iniciarJogo(jogo) {
     }
   }
 
-  atualizarIndicadorParte(); // Chama no fim para garantir que a classe 'terminado' se aplica
+  atualizarIndicadorParte(); 
 
   if (estado.cronometroInterval) clearInterval(estado.cronometroInterval);
   if (!jogo.terminado && !jogo.pausado && !jogo.agendado) arrancarCronometro();
 }
+
 function arrancarCronometro() {
   if (estado.cronometroInterval) clearInterval(estado.cronometroInterval);
   estado.cronometroInterval = setInterval(() => {
@@ -619,11 +620,26 @@ function abrirPainelAcoes(jogadorId, botaoEl) {
     alert('Este jogo já terminou. Não é possível registar mais eventos.');
     return;
   }
+  
   estado.jogadorSelecionado = jogadorId;
   document.querySelectorAll('.grid-jogadores button').forEach(b => b.classList.remove('selecionado'));
   botaoEl.classList.add('selecionado');
+  
   const jogador = estado.plantel.find(j => j.id === jogadorId);
   document.getElementById('painel-jogador-nome').textContent = `#${jogador.numero} ${jogador.nome}`;
+
+  // --- MOSTRAR/ESCONDER BOTÕES CONFORME A POSIÇÃO ---
+  const btnDefesa = document.querySelector('.botoes-acoes .acao[data-tipo="defesa-gr"]');
+  const btnGoloSofrido = document.querySelector('.botoes-acoes .acao[data-tipo="golo-deles"]');
+
+  if (jogador.posicao === 'GR') {
+    if (btnDefesa) btnDefesa.classList.remove('escondido');
+    if (btnGoloSofrido) btnGoloSofrido.classList.remove('escondido');
+  } else {
+    if (btnDefesa) btnDefesa.classList.add('escondido');
+    if (btnGoloSofrido) btnGoloSofrido.classList.add('escondido');
+  }
+
   painelAcoes.classList.remove('escondido');
 }
 
@@ -653,7 +669,7 @@ async function registarEvento(tipo, resultado, jogadorId) {
   const evento = {
     id: 'e_' + Date.now() + Math.random().toString(36).slice(2, 6),
     tipo, resultado,
-    jogadorId: tipo === 'golo-deles' ? null : jogadorId,
+    jogadorId: jogadorId, // Agora guarda o GR que sofreu o golo
     minuto: estado.jogo.minuto,
     segundo: estado.jogo.segundo,
     parte: estado.jogo.parte,
@@ -752,7 +768,7 @@ function atualizarIndicadorParte() {
   const btnParte = document.getElementById('btn-proxima-parte');
   const controlos = document.getElementById('controlos-tempo');
   const aviso = document.getElementById('aviso-terminado');
-  const btnGuardar = document.getElementById('btn-guardar-jogo'); // ⬅️ NOVO
+  const btnGuardar = document.getElementById('btn-guardar-jogo');
 
   if (estado.jogo.terminado) {
     if (parteEl) { parteEl.textContent = 'Fim'; parteEl.classList.remove('pausado'); parteEl.classList.add('terminado'); }
@@ -760,7 +776,6 @@ function atualizarIndicadorParte() {
     if (controlos) controlos.classList.add('escondido');
     if (aviso) aviso.classList.remove('escondido');
     
-    // ⬇️ NOVO: Esconder o botão Guardar Jogo se já terminou
     if (btnGuardar) btnGuardar.classList.add('escondido'); 
     
     return;
@@ -771,7 +786,6 @@ function atualizarIndicadorParte() {
   if (parteEl) parteEl.classList.remove('terminado');
   if (cronEl) cronEl.classList.remove('terminado');
   
-  // ⬇️ NOVO: Mostrar o botão Guardar Jogo se ainda está a decorrer
   if (btnGuardar) btnGuardar.classList.remove('escondido'); 
 
   if (parteEl) {
@@ -783,6 +797,7 @@ function atualizarIndicadorParte() {
     btnParte.textContent = estado.jogo.parte === 1 ? '⏭️ Terminar 1ª Parte' : '🏁 Terminar Jogo';
   }
 }
+
 function atualizarBotaoPausa() {
   const btn = document.getElementById('btn-pausa');
   if (!btn) return;
@@ -919,7 +934,8 @@ function calcularEstatisticas() {
     porJogador[j.id] = {
       jogador: j, golos: 0, assistencias: 0, remates: 0, defesas: 0,
       faltasCometidas: 0, faltasSofridas: 0,
-      cartoesAmarelos: 0, cartoesVermelhos: 0, minutos: 0
+      cartoesAmarelos: 0, cartoesVermelhos: 0, minutos: 0,
+      golosSofridos: 0
     };
   });
 
@@ -936,6 +952,7 @@ function calcularEstatisticas() {
       case 'falta-sofrida':    s.faltasSofridas++; break;
       case 'cartao-amarelo':   s.cartoesAmarelos++; break;
       case 'cartao-vermelho':  s.cartoesVermelhos++; break;
+      case 'golo-deles':       s.golosSofridos++; break;
     }
   });
 
@@ -989,7 +1006,7 @@ function renderizarEstatisticas() {
   ordenados.forEach(s => {
     const semAcao = s.golos === 0 && s.assistencias === 0 && s.remates === 0 &&
       s.defesas === 0 && s.faltasCometidas === 0 && s.faltasSofridas === 0 &&
-      s.cartoesAmarelos === 0 && s.cartoesVermelhos === 0;
+      s.cartoesAmarelos === 0 && s.cartoesVermelhos === 0 && s.golosSofridos === 0;
 
     const cartao = document.createElement('div');
     cartao.className = 'cartao-jogador' + (semAcao ? ' vazio' : '');
@@ -1004,6 +1021,7 @@ function renderizarEstatisticas() {
         <span><strong>${s.assistencias}</strong> assist.</span>
         <span><strong>${s.remates}</strong> remates</span>
         ${s.defesas > 0 ? `<span><strong>${s.defesas}</strong> defesas</span>` : ''}
+        ${s.golosSofridos > 0 ? `<span><strong>${s.golosSofridos}</strong> golos sofridos</span>` : ''}
         <span><strong>${s.faltasCometidas}</strong> faltas com.</span>
         ${s.faltasSofridas > 0 ? `<span><strong>${s.faltasSofridas}</strong> faltas sof.</span>` : ''}
         ${s.cartoesAmarelos > 0 ? `<span>🟨 <strong>${s.cartoesAmarelos}</strong></span>` : ''}
@@ -1113,7 +1131,10 @@ function renderizarRelatorio() {
       if (!j) return;
       icone = '⚽'; descricao = `Golo — #${j.numero} ${j.nome}`; classeExtra = 'crono-golo';
     } else if (ev.tipo === 'golo-deles') {
-      icone = '🥅'; descricao = 'Golo do adversário'; classeExtra = 'crono-golo-adv';
+      const j = estado.plantel.find(p => p.id === ev.jogadorId);
+      icone = '🥅'; 
+      descricao = j ? `Golo sofrido — #${j.numero} ${j.nome}` : 'Golo do adversário'; 
+      classeExtra = 'crono-golo-adv';
     } else if (ev.tipo === 'assistencia') {
       const j = estado.plantel.find(p => p.id === ev.jogadorId);
       if (!j) return;
